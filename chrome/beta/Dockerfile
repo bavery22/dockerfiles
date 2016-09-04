@@ -14,12 +14,15 @@
 #	jess/chrome:beta
 #
 
+# to Build:
+# docker build --build-arg UID=`id -u` --build-arg GID=`id -g` -t `whoami`/chromebeta:local   . 
 # Base docker image
 FROM debian:sid
 MAINTAINER Jessica Frazelle <jess@docker.com>
 
 ADD https://dl.google.com/linux/direct/google-talkplugin_current_amd64.deb /src/google-talkplugin_current_amd64.deb
-
+ARG UID
+ARG GID
 # Install Chrome
 RUN echo 'deb http://httpredir.debian.org/debian testing main' >> /etc/apt/sources.list && \
 	apt-get update && apt-get install -y \
@@ -31,6 +34,8 @@ RUN echo 'deb http://httpredir.debian.org/debian testing main' >> /etc/apt/sourc
 	libgl1-mesa-glx \
 	libpulse0 \
 	libv4l-0 \
+	vim \
+	nmap \
 	-t testing \
 	fonts-symbola \
 	--no-install-recommends \
@@ -42,10 +47,14 @@ RUN echo 'deb http://httpredir.debian.org/debian testing main' >> /etc/apt/sourc
 	&& dpkg -i '/src/google-talkplugin_current_amd64.deb' \
 	&& apt-get purge --auto-remove -y curl \
 	&& rm -rf /var/lib/apt/lists/* \
-	&& rm -rf /src/*.deb
+	&& rm -rf /src/*.deb \
+	&& useradd -m -u $UID -g $GID chrome 
+
 
 COPY local.conf /etc/fonts/local.conf
 
+USER chrome
+
 # Autorun chrome
-ENTRYPOINT [ "google-chrome" ]
-CMD [ "--user-data-dir=/data" ]
+ENTRYPOINT [ "google-chrome-beta","--no-first-run","--window-size=1200,1300", "--window-position=10,10" ]
+#CMD [ "--user-data-dir=/data" ]
